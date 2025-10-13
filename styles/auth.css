@@ -1,0 +1,182 @@
+/* Auth Pages Styling */
+
+/* Auth Layout */
+.auth-layout {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 24px;
+}
+
+.auth-container {
+  width: 100%;
+  max-width: 450px;
+}
+
+/* Brand Header */
+.auth-brand {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.auth-brand h1 {
+  color: white;
+  font-size: 48px;
+  margin-bottom: 8px;
+  font-weight: 600;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+.auth-brand h4 {
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 400;
+  margin: 0;
+  font-size: 18px;
+}
+
+/* Auth Card */
+.auth-card {
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3) !important;
+  background: rgba(255, 255, 255, 0.98) !important;
+  backdrop-filter: blur(10px);
+  border-radius: 16px !important;
+}
+
+/* Auth Form Inputs - Force light theme styling */
+.auth-card .ant-input,
+.auth-card .ant-input-affix-wrapper,
+.auth-card .ant-input-affix-wrapper > input.ant-input,
+.auth-card .ant-input-password,
+.auth-card .ant-input-password input {
+  background: #ffffff !important;
+  border: 1px solid #d9d9d9 !important;
+  border-radius: 8px !important;
+  color: #000000 !important;
+  font-size: 16px !important;
+  padding: 12px !important;
+}
+
+/* Remove nested borders for auth inputs */
+.auth-card .ant-input-affix-wrapper > input.ant-input {
+  border: none !important;
+  background: transparent !important;
+  padding: 0 !important;
+}
+
+/* Input prefix icons */
+.auth-card .ant-input-prefix {
+  color: #8c8c8c !important;
+  margin-right: 12px !important;
+}
+
+/* Password visibility toggle */
+.auth-card .ant-input-password-icon {
+  color: #8c8c8c !important;
+}
+
+/* Input placeholders */
+.auth-card .ant-input::placeholder,
+.auth-card .ant-input-affix-wrapper input::placeholder {
+  color: #bfbfbf !important;
+  opacity: 1 !important;
+}
+
+/* Input hover state */
+.auth-card .ant-input:hover,
+.auth-card .ant-input-affix-wrapper:hover {
+  border-color: #40a9ff !important;
+}
+
+/* Input focus state */
+.auth-card .ant-input:focus,
+.auth-card .ant-input-focused,
+.auth-card .ant-input-affix-wrapper-focused {
+  border-color: #10b981 !important;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2) !important;
+  outline: none !important;
+}
+
+/* Form labels */
+.auth-card .ant-form-item-label > label {
+  color: #262626 !important;
+  font-weight: 500 !important;
+}
+
+/* Form error messages */
+.auth-card .ant-form-item-explain-error {
+  color: #ff4d4f !important;
+}
+
+/* Auth buttons */
+.auth-card .ant-btn-primary {
+  background: #10b981 !important;
+  border-color: #10b981 !important;
+  height: 48px !important;
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  border-radius: 8px !important;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3) !important;
+}
+
+.auth-card .ant-btn-primary:hover {
+  background: #059669 !important;
+  border-color: #059669 !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4) !important;
+}
+
+.auth-card .ant-btn-primary:active {
+  transform: translateY(0);
+}
+
+/* Divider */
+.auth-card .ant-divider {
+  border-color: #f0f0f0 !important;
+}
+
+.auth-card .ant-divider-inner-text {
+  color: #8c8c8c !important;
+}
+
+/* Links */
+.auth-card a {
+  color: #1890ff !important;
+  transition: color 0.3s !important;
+}
+
+.auth-card a:hover {
+  color: #40a9ff !important;
+}
+
+/* Text colors */
+.auth-card .ant-typography {
+  color: #595959 !important;
+}
+
+.auth-card .ant-typography-secondary {
+  color: #8c8c8c !important;
+}
+
+/* Title */
+.auth-card .ant-typography h3 {
+  color: #262626 !important;
+  margin-bottom: 8px !important;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .auth-brand h1 {
+    font-size: 36px;
+  }
+  
+  .auth-brand h4 {
+    font-size: 16px;
+  }
+  
+  .auth-container {
+    max-width: 100%;
+  }
+}
+

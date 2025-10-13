@@ -1,0 +1,591 @@
+/* Supabase-inspired Theme for SmartGrid */
+
+:root {
+  /* Light Mode Colors */
+  --background: #fff;
+  --foreground: #171717;
+  --card: #ffffff;
+  --card-hover: #fafafa;
+  --popover: #ffffff;
+  --primary: #10b981; /* Supabase green */
+  --primary-hover: #059669;
+  --secondary: #f3f4f6;
+  --muted: #f9fafb;
+  --accent: #f3f4f6;
+  --destructive: #ef4444;
+  --border: #e5e7eb;
+  --input: #ffffff;
+  --input-border: #d1d5db;
+  --ring: #10b981;
+  --gradient-start: #10b981;
+  --gradient-end: #3b82f6;
+  
+  /* Text Colors */
+  --text-primary: #171717;
+  --text-secondary: #6b7280;
+  --text-muted: #9ca3af;
+  
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+  
+  /* Transitions */
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-base: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Dark Mode */
+[data-theme="dark"] {
+  --background: #0a0a0a;
+  --foreground: #fafafa;
+  --card: #171717;
+  --card-hover: #262626;
+  --popover: #171717;
+  --primary: #10b981;
+  --primary-hover: #34d399;
+  --secondary: #262626;
+  --muted: #262626;
+  --accent: #262626;
+  --destructive: #dc2626;
+  --border: #262626;
+  --input: #1a1a1a;
+  --input-border: #333333;
+  --ring: #10b981;
+  
+  --text-primary: #fafafa;
+  --text-secondary: #a3a3a3;
+  --text-muted: #737373;
+  
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.5);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.7);
+}
+
+/* Global Styles */
+* {
+  transition: background-color var(--transition-base),
+              border-color var(--transition-base),
+              color var(--transition-fast);
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Smooth Scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--background);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 5px;
+  transition: background var(--transition-fast);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+/* Ant Design Overrides */
+.ant-layout {
+  background: var(--background) !important;
+  color: var(--text-primary) !important;
+}
+
+.ant-layout-sider {
+  background: var(--card) !important;
+  border-right: 1px solid var(--border) !important;
+  box-shadow: var(--shadow-sm);
+  padding: 16px 0 !important;
+}
+
+/* Dark theme specific */
+.dark-theme .ant-layout-sider,
+[data-theme="dark"] .ant-layout-sider {
+  background: #111111 !important;
+  border-right: 1px solid #262626 !important;
+}
+
+/* Sidebar inner content */
+.ant-layout-sider-children {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.ant-layout-header {
+  background: var(--card) !important;
+  border-bottom: 1px solid var(--border) !important;
+  padding: 0 24px !important;
+  height: 64px !important;
+  line-height: 64px !important;
+  box-shadow: var(--shadow-sm);
+}
+
+.dark-theme .ant-layout-header,
+[data-theme="dark"] .ant-layout-header {
+  background: #111111 !important;
+  border-bottom: 1px solid #262626 !important;
+  color: #fafafa !important;
+}
+
+.ant-menu {
+  background: transparent !important;
+  border: none !important;
+}
+
+.ant-menu-item {
+  color: var(--text-secondary) !important;
+  transition: all var(--transition-fast) !important;
+  border-radius: 6px !important;
+  margin: 4px 16px !important;
+  position: relative !important;
+  padding: 12px 16px !important;
+  height: auto !important;
+  line-height: 1.5 !important;
+}
+
+.dark-theme .ant-menu-item,
+[data-theme="dark"] .ant-menu-item {
+  color: #8c8c8c !important;
+}
+
+/* Menu item icons */
+.ant-menu-item .anticon {
+  font-size: 18px !important;
+  margin-right: 12px !important;
+  vertical-align: middle !important;
+}
+
+/* Menu text */
+.ant-menu-item span {
+  vertical-align: middle !important;
+}
+
+/* Hover state */
+.ant-menu-item:hover {
+  color: var(--text-primary) !important;
+  background: rgba(16, 185, 129, 0.08) !important;
+}
+
+.dark-theme .ant-menu-item:hover,
+[data-theme="dark"] .ant-menu-item:hover {
+  color: #fafafa !important;
+  background: rgba(16, 185, 129, 0.1) !important;
+}
+
+/* Selected state - Exact Supabase style */
+.ant-menu-item-selected {
+  color: var(--text-primary) !important;
+  background: rgba(0, 0, 0, 0.04) !important;
+  font-weight: 500 !important;
+}
+
+.dark-theme .ant-menu-item-selected,
+[data-theme="dark"] .ant-menu-item-selected {
+  color: #fafafa !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* Selected hover */
+.ant-menu-item-selected:hover {
+  color: var(--text-primary) !important;
+  background: rgba(0, 0, 0, 0.06) !important;
+}
+
+.dark-theme .ant-menu-item-selected:hover,
+[data-theme="dark"] .ant-menu-item-selected:hover {
+  color: #fafafa !important;
+  background: rgba(255, 255, 255, 0.12) !important;
+}
+
+/* Remove default selected indicator */
+.ant-menu-item-selected::after,
+.ant-menu-item::after {
+  display: none !important;
+}
+
+/* Selected icon color */
+.ant-menu-item-selected .anticon {
+  color: var(--text-primary) !important;
+}
+
+.dark-theme .ant-menu-item-selected .anticon,
+[data-theme="dark"] .ant-menu-item-selected .anticon {
+  color: #fafafa !important;
+}
+
+/* Logo styling */
+.ant-layout-sider .logo,
+.ant-layout-sider h2 {
+  color: var(--text-primary) !important;
+}
+
+.dark-theme .ant-layout-sider .logo,
+.dark-theme .ant-layout-sider h2,
+[data-theme="dark"] .ant-layout-sider .logo,
+[data-theme="dark"] .ant-layout-sider h2 {
+  color: #fafafa !important;
+}
+
+/* Cards with Hover Effect */
+.ant-card {
+  background: var(--card) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 12px !important;
+  transition: all var(--transition-base) !important;
+  box-shadow: var(--shadow-sm) !important;
+}
+
+.ant-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md) !important;
+  border-color: var(--primary) !important;
+}
+
+.ant-card-head {
+  border-bottom: 1px solid var(--border) !important;
+  color: var(--text-primary) !important;
+}
+
+.ant-card-body {
+  color: var(--text-secondary) !important;
+}
+
+/* Buttons */
+.ant-btn {
+  border-radius: 8px !important;
+  font-weight: 500 !important;
+  transition: all var(--transition-fast) !important;
+  border: 1px solid var(--border) !important;
+}
+
+.ant-btn-primary {
+  background: var(--primary) !important;
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.5) !important;
+}
+
+.ant-btn-primary:hover {
+  background: var(--primary-hover) !important;
+  border-color: var(--primary-hover) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3) !important;
+}
+
+.ant-btn-primary:active {
+  transform: translateY(0);
+}
+
+/* Input Fields - Global Reset */
+.ant-input,
+.ant-input-affix-wrapper,
+.ant-input-affix-wrapper > input.ant-input,
+.ant-input-password,
+.ant-input-password input,
+.ant-input-search .ant-input,
+.ant-input-search .ant-input-affix-wrapper,
+.ant-select-selector,
+.ant-picker,
+.ant-picker-input > input {
+  background: var(--input) !important;
+  border: 1px solid var(--input-border) !important;
+  border-radius: 8px !important;
+  color: var(--text-primary) !important;
+  transition: all var(--transition-fast) !important;
+  box-shadow: none !important;
+}
+
+/* Remove nested borders */
+.ant-input-affix-wrapper > input.ant-input {
+  border: none !important;
+  background: transparent !important;
+}
+
+.ant-input-search .ant-input-affix-wrapper {
+  border: 1px solid var(--input-border) !important;
+  background: var(--input) !important;
+}
+
+/* Search icon */
+.ant-input-search .ant-input-prefix,
+.ant-input-affix-wrapper .ant-input-prefix {
+  color: var(--text-muted) !important;
+}
+
+/* Input placeholder */
+.ant-input::placeholder,
+.ant-input-affix-wrapper input::placeholder,
+.ant-input-search input::placeholder {
+  color: var(--text-muted) !important;
+  opacity: 0.7 !important;
+}
+
+/* Input hover state */
+.ant-input:hover,
+.ant-input-affix-wrapper:hover,
+.ant-input-affix-wrapper:hover input,
+.ant-input-password:hover,
+.ant-select:hover .ant-select-selector,
+.ant-picker:hover {
+  border-color: var(--primary) !important;
+}
+
+.ant-input-affix-wrapper:hover {
+  border-color: var(--primary) !important;
+}
+
+/* Input focus state */
+.ant-input:focus,
+.ant-input-focused,
+.ant-input-affix-wrapper-focused,
+.ant-input-affix-wrapper-focused input,
+.ant-input-password-focused,
+.ant-select-focused .ant-select-selector,
+.ant-picker-focused {
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2) !important;
+  outline: none !important;
+}
+
+/* Fix for search input button */
+.ant-input-search-button {
+  background: var(--primary) !important;
+  border: none !important;
+  color: white !important;
+  height: 100% !important;
+}
+
+/* Fix for disabled inputs */
+.ant-input-disabled,
+.ant-input-affix-wrapper-disabled,
+.ant-select-disabled .ant-select-selector {
+  background: var(--muted) !important;
+  color: var(--text-muted) !important;
+  cursor: not-allowed !important;
+  opacity: 0.6 !important;
+}
+
+/* Tables */
+.ant-table {
+  background: var(--card) !important;
+  border-radius: 12px !important;
+  overflow: hidden !important;
+}
+
+.dark-theme .ant-table,
+[data-theme="dark"] .ant-table {
+  background: #171717 !important;
+}
+
+.ant-table-thead > tr > th {
+  background: var(--secondary) !important;
+  color: var(--text-primary) !important;
+  font-weight: 600 !important;
+  border-bottom: 1px solid var(--border) !important;
+}
+
+.dark-theme .ant-table-thead > tr > th,
+[data-theme="dark"] .ant-table-thead > tr > th {
+  background: #262626 !important;
+  color: #fafafa !important;
+  border-bottom: 1px solid #333 !important;
+}
+
+.ant-table-tbody > tr > td {
+  border-bottom: 1px solid var(--border) !important;
+  color: var(--text-secondary) !important;
+}
+
+.dark-theme .ant-table-tbody > tr > td,
+[data-theme="dark"] .ant-table-tbody > tr > td {
+  border-bottom: 1px solid #262626 !important;
+  color: #a3a3a3 !important;
+}
+
+.ant-table-tbody > tr:hover > td {
+  background: var(--secondary) !important;
+}
+
+.dark-theme .ant-table-tbody > tr:hover > td,
+[data-theme="dark"] .ant-table-tbody > tr:hover > td {
+  background: #262626 !important;
+}
+
+/* Empty state styling */
+.ant-empty-description {
+  color: var(--text-secondary) !important;
+}
+
+.dark-theme .ant-empty-description,
+[data-theme="dark"] .ant-empty-description {
+  color: #737373 !important;
+}
+
+/* Table container */
+.ant-table-container {
+  border: 1px solid var(--border) !important;
+  border-radius: 12px !important;
+}
+
+.dark-theme .ant-table-container,
+[data-theme="dark"] .ant-table-container {
+  border: 1px solid #262626 !important;
+}
+
+/* Modals */
+.ant-modal-content {
+  background: var(--card) !important;
+  border-radius: 12px !important;
+  box-shadow: var(--shadow-lg) !important;
+}
+
+.ant-modal-header {
+  background: var(--card) !important;
+  border-bottom: 1px solid var(--border) !important;
+}
+
+.ant-modal-body {
+  color: var(--text-secondary) !important;
+}
+
+/* Notifications */
+.ant-notification-notice {
+  background: var(--card) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 12px !important;
+  box-shadow: var(--shadow-md) !important;
+}
+
+/* Loading States */
+.ant-spin-dot-item {
+  background-color: var(--primary) !important;
+}
+
+/* Page Transitions */
+.page-transition-enter {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.page-transition-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: all var(--transition-slow);
+}
+
+.page-transition-exit {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.page-transition-exit-active {
+  opacity: 0;
+  transform: translateY(-20px);
+  transition: all var(--transition-slow);
+}
+
+/* Gradient Backgrounds */
+.gradient-bg {
+  background: linear-gradient(135deg, var(--gradient-start) 0%, var(--gradient-end) 100%);
+  background-size: 200% 200%;
+  animation: gradientShift 15s ease infinite;
+}
+
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Glassmorphism Effect */
+.glass {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+}
+
+/* Plan Cards Special Styling */
+.plan-card {
+  position: relative;
+  transition: all var(--transition-base) !important;
+}
+
+.plan-card-recommended {
+  border: 2px solid var(--primary) !important;
+}
+
+/* Avatar Hover Effect */
+.ant-avatar {
+  transition: all var(--transition-base) !important;
+  cursor: pointer;
+}
+
+.ant-avatar:hover {
+  transform: scale(1.1);
+  box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2);
+}
+
+/* Custom Success Animation */
+@keyframes successPulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.success-animate {
+  animation: successPulse 0.5s ease-in-out;
+}
+
+/* Dark Mode Toggle */
+.theme-toggle {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: white;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-lg);
+  transition: all var(--transition-base);
+  z-index: 1000;
+}
+
+.theme-toggle:hover {
+  transform: scale(1.1);
+  box-shadow: 0 0 0 8px rgba(16, 185, 129, 0.2);
+}
