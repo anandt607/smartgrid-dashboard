@@ -12,11 +12,10 @@ import { NextResponse } from 'next/server'
 // Create Supabase admin client
 function createSupabaseAdmin() {
   return createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_KEY
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_KEY
   )
 }
-)
 
 // Create client for user session
 function createSupabaseClient() {
@@ -62,6 +61,9 @@ export async function DELETE(request) {
     }
 
     console.log(`🗑️ Removing user ${userId} from organization ${organizationId}`)
+
+    // Create Supabase admin client for database operations
+    const supabaseAdmin = createSupabaseAdmin()
 
     // 1. Check if current user can remove members from this organization
     const { data: currentUserMembership } = await supabaseAdmin
@@ -116,8 +118,7 @@ export async function DELETE(request) {
       .from('organization_members')
       .update({ 
         is_active: false,
-        removed_at: new Date().toISOString(),
-        removed_by: user.id
+        updated_at: new Date().toISOString()
       })
       .eq('user_id', userId)
       .eq('organization_id', organizationId)

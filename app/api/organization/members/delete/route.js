@@ -143,6 +143,9 @@ export async function DELETE(request) {
 
     console.log(`🗑️ Deleting user ${userId}`)
 
+    // Create Supabase admin client for database operations
+    const supabaseAdmin = createSupabaseAdmin()
+
     // 1. Check if user exists in organization_members
     const { data: membership, error: membershipError } = await supabaseAdmin
       .from('organization_members')

@@ -6,11 +6,10 @@ import { createServerClient } from '@supabase/ssr'
 // Create admin client for database operations
 function createSupabaseAdmin() {
   return createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_KEY
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_KEY
   )
 }
-)
 
 /**
  * POST /api/credits/consume
@@ -58,6 +57,12 @@ export async function POST(request) {
         { status: 400 }
       )
     }
+
+    // Create Supabase admin client for database operations
+    const supabaseAdmin = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_KEY
+    )
 
     // Get current billing info
     const { data: billing, error: billingError } = await supabaseAdmin

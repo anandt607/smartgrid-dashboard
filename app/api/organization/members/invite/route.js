@@ -46,13 +46,27 @@ function addCorsHeaders(response, origin) {
     'http://localhost:3002', // TeamGrid Frontend
     'http://localhost:3003', // CallGrid
     'http://localhost:3004', // SalesGrid
+    // Add production URLs if needed
+    'https://smartgrid-dashboard.vercel.app',
+    'https://teamgrid-frontend.vercel.app',
+    'https://brandgrid-frontend.vercel.app',
+    'https://callgrid-frontend.vercel.app',
+    'https://salesgrid-frontend.vercel.app'
   ]
 
   if (allowedOrigins.includes(origin)) {
     response.headers.set('Access-Control-Allow-Origin', origin)
     response.headers.set('Access-Control-Allow-Credentials', 'true')
     response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
-    response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+    response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-App-Source')
+  } else {
+    // For development, allow any localhost origin
+    if (origin && origin.startsWith('http://localhost:')) {
+      response.headers.set('Access-Control-Allow-Origin', origin)
+      response.headers.set('Access-Control-Allow-Credentials', 'true')
+      response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+      response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-App-Source')
+    }
   }
   
   return response
@@ -69,15 +83,26 @@ export async function OPTIONS(request) {
     'http://localhost:3002', // TeamGrid Frontend
     'http://localhost:3003', // CallGrid
     'http://localhost:3004', // SalesGrid
+    // Add production URLs if needed
+    'https://smartgrid-dashboard.vercel.app',
+    'https://teamgrid-frontend.vercel.app',
+    'https://brandgrid-frontend.vercel.app',
+    'https://callgrid-frontend.vercel.app',
+    'https://salesgrid-frontend.vercel.app'
   ]
 
   if (allowedOrigins.includes(origin)) {
     response.headers.set('Access-Control-Allow-Origin', origin)
+  } else {
+    // For development, allow any localhost origin
+    if (origin && origin.startsWith('http://localhost:')) {
+      response.headers.set('Access-Control-Allow-Origin', origin)
+    }
   }
   
   response.headers.set('Access-Control-Allow-Credentials', 'true')
   response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
-  response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+  response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-App-Source')
   response.headers.set('Access-Control-Max-Age', '86400')
   
   return response
@@ -85,6 +110,7 @@ export async function OPTIONS(request) {
 
 export async function POST(request) {
   const origin = request.headers.get('origin')
+  const source = request.headers.get('x-app-source') // ✅ Get source header
   
   try {
     // Check for Grid Apps API secret (for cross-origin calls from TeamGrid, etc.)
@@ -99,6 +125,7 @@ export async function POST(request) {
       const token = authHeader.replace('Bearer ', '')
       if (token === gridAppsSecret) {
         console.log('✅ Authenticated via Grid Apps API secret')
+        console.log('🔍 Request source:', source || 'unknown')
         isAuthenticated = true
         // For cross-origin calls, we won't have a specific user
         // The organizationId will be validated separately
@@ -128,6 +155,29 @@ export async function POST(request) {
     }
 
     const body = await request.json()
+    
+    // ✅ Determine app access based on source
+    let defaultApps = body.apps || ['teamgrid']
+    
+    if (source === 'teamgrid' || origin === 'http://localhost:3002') {
+      defaultApps = ['teamgrid'] // Force TeamGrid access only
+      console.log('🎯 Source: TeamGrid - Granting only TeamGrid access')
+    } else if (source === 'brandgrid' || origin === 'http://localhost:3003') {
+      defaultApps = ['brandgrid'] // Force BrandGrid access only
+      console.log('🎯 Source: BrandGrid - Granting only BrandGrid access')
+    } else if (source === 'callgrid' || origin === 'http://localhost:3004') {
+      defaultApps = ['callgrid'] // Force CallGrid access only
+      console.log('🎯 Source: CallGrid - Granting only CallGrid access')
+    } else if (source === 'salesgrid' || origin === 'http://localhost:3005') {
+      defaultApps = ['salesgrid'] // Force SalesGrid access only
+      console.log('🎯 Source: SalesGrid - Granting only SalesGrid access')
+    } else if (source === 'smartgrid' || origin === 'http://localhost:3000') {
+      defaultApps = body.apps || ['teamgrid'] // Use admin-selected apps
+      console.log('🎯 Source: SmartGrid - Using admin-selected apps:', defaultApps)
+    } else {
+      console.log('⚠️ Unknown source:', source, 'origin:', origin, '- Using default apps:', defaultApps)
+    }
+    
     const { 
       firstName, 
       lastName, 
@@ -135,7 +185,7 @@ export async function POST(request) {
       password = crypto.randomBytes(12).toString('hex'), // Generate password if not provided
       organizationId,
       role = 'member',
-      apps = ['teamgrid'] // Default app access
+      apps = defaultApps // Use determined app access
     } = body
 
     // Validate required fields
@@ -257,7 +307,7 @@ export async function POST(request) {
 
     console.log(`✅ User added to organization as ${role}`)
 
-    // 4. Grant app access
+    // 4. Grant organization app access (ensure organization has access to the app)
     const appAccessPromises = apps.map(async (appName) => {
       const { error } = await createSupabaseAdmin()
         .from('organization_apps')
@@ -272,13 +322,29 @@ export async function POST(request) {
         })
 
       if (error) {
-        console.error(`⚠️ Error granting ${appName} access:`, error)
+        console.error(`⚠️ Error granting organization ${appName} access:`, error)
       } else {
-        console.log(`✅ Granted ${appName} access`)
+        console.log(`✅ Granted organization ${appName} access`)
       }
     })
 
     await Promise.all(appAccessPromises)
+
+    // 5. Grant specific member app access (individual member permissions)
+    // Use the database function to grant access to specific apps only
+    const { error: grantAccessError } = await createSupabaseAdmin()
+      .rpc('grant_specific_member_app_access', {
+        p_user_id: newUserId,
+        p_organization_id: organizationId,
+        p_app_names: apps, // Only grant access to the specific apps requested
+        p_granted_by: authenticatedUserId || null
+      })
+
+    if (grantAccessError) {
+      console.error(`⚠️ Error granting member app access:`, grantAccessError)
+    } else {
+      console.log(`✅ Granted member access to specific apps: ${apps.join(', ')}`)
+    }
 
     const response = NextResponse.json({
       success: true,
