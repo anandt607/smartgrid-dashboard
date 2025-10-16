@@ -2,19 +2,18 @@ import { NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
-const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_KEY,
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
+function createSupabaseClient() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_KEY,
+    {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
     }
-  }
-)
+  )
+}
 
 export async function POST(request) {
   try {
@@ -27,6 +26,9 @@ export async function POST(request) {
       console.error('❌ No signature')
       return NextResponse.json({ error: 'No signature' }, { status: 400 })
     }
+
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET
 
     // Verify webhook signature
     let event
@@ -201,10 +203,5 @@ export async function POST(request) {
   }
 }
 
-// Disable body parsing for webhook
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-}
+// Body parsing is automatically disabled for webhooks in Next.js 14
 

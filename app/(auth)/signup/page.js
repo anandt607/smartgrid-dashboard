@@ -2,8 +2,9 @@
 
 import { useState } from 'react'
 import { Card, Form, Input, Button, Divider, Typography, message } from 'antd'
-import { UserOutlined, LockOutlined, MailOutlined } from '@ant-design/icons'
+import { UserOutlined, LockOutlined, MailOutlined, BankOutlined } from '@ant-design/icons'
 import { useRouter } from 'next/navigation'
+import { useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
 import { signUp } from '@/lib/api/auth'
 import { validatePasswordStrength } from '@/lib/utils/helpers'
@@ -18,16 +19,22 @@ export default function SignupPage() {
   const [loading, setLoading] = useState(false)
   const [form] = Form.useForm()
   const router = useRouter()
+  const queryClient = useQueryClient()
 
   const handleSubmit = async (values) => {
     try {
       setLoading(true)
-      await signUp({
+      const response = await signUp({
         email: values.email,
         password: values.password,
         fullName: values.fullName,
+        organizationName: values.organizationName,
       })
-      message.success('Account created successfully! Please check your email to verify your account.')
+      
+      // Clear all cached queries
+      queryClient.clear()
+      
+      message.success(response.message || `Welcome to ${response.organization?.name}! 🎉`)
       router.push('/login')
     } catch (error) {
       message.error(error?.message || 'Failed to create account')
@@ -39,8 +46,8 @@ export default function SignupPage() {
   return (
     <Card className="auth-card">
       <div style={{ textAlign: 'center', marginBottom: 24 }}>
-        <Title level={3}>Create Account</Title>
-        <Text type="secondary">Sign up to get started with SmartGrid</Text>
+        <Title level={3}>Create Your Organization</Title>
+        <Text type="secondary">Start your 14-day free trial with SmartGrid</Text>
       </div>
 
       <Form
@@ -57,6 +64,16 @@ export default function SignupPage() {
           <Input
             prefix={<UserOutlined />}
             placeholder="Full name"
+          />
+        </Form.Item>
+
+        <Form.Item
+          name="organizationName"
+          rules={[{ required: true, message: 'Please enter your organization name' }]}
+        >
+          <Input
+            prefix={<BankOutlined />}
+            placeholder="Organization name"
           />
         </Form.Item>
 

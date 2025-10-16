@@ -12,9 +12,11 @@ export function useTheme() {
 
 export default function ThemeProvider({ children }) {
   const [isDark, setIsDark] = useState(false)
+  const [mounted, setMounted] = useState(false)
 
   // Load theme preference from localStorage
   useEffect(() => {
+    setMounted(true)
     const savedTheme = localStorage.getItem('theme')
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
     
@@ -90,6 +92,15 @@ export default function ThemeProvider({ children }) {
         rowHoverBg: isDark ? '#262626' : '#f9fafb',
       },
     },
+  }
+
+  // Prevent hydration mismatch by not rendering until mounted
+  if (!mounted) {
+    return (
+      <ConfigProvider theme={antTheme}>
+        {children}
+      </ConfigProvider>
+    )
   }
 
   return (

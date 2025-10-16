@@ -6,27 +6,30 @@ import {
   UserOutlined, 
   SettingOutlined, 
   LogoutOutlined,
-  ThunderboltOutlined 
+  ThunderboltOutlined,
+  BankOutlined
 } from '@ant-design/icons'
 import { useRouter } from 'next/navigation'
-import { signOut } from '@/lib/api/auth'
+import { useAuth } from '@/components/providers/AuthProvider'
 import { getPlanColor, getInitials } from '@/lib/utils/helpers'
 
 const { Text } = Typography
 
 /**
  * Dashboard header component
- * Shows plan badge, credits, notifications, and user menu
+ * Shows organization, plan badge, credits, notifications, and user menu
  * @param {Object} user - Current user object
  * @param {Object} billing - Billing information
+ * @param {Object} organization - Organization information
  */
-export default function DashboardHeader({ user, billing }) {
+export default function DashboardHeader({ user, billing, organization }) {
   const router = useRouter()
+  const { signOut } = useAuth()
 
   const handleLogout = async () => {
     try {
       await signOut()
-      router.push('/login')
+      // AuthProvider will handle the redirect
     } catch (error) {
       console.error('Logout error:', error)
     }
@@ -59,6 +62,16 @@ export default function DashboardHeader({ user, billing }) {
 
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
+      {/* Organization Name */}
+      {organization?.name && (
+        <Space size={6}>
+          <BankOutlined style={{ fontSize: 16, color: '#1890ff' }} />
+          <Text strong style={{ fontSize: 14 }}>
+            {organization.name}
+          </Text>
+        </Space>
+      )}
+
       {/* Plan Badge */}
       {billing?.plan && (
         <Tag color={getPlanColor(billing.plan)} className="plan-tag">

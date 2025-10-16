@@ -7,6 +7,7 @@ import {
   SettingOutlined,
   CreditCardOutlined,
   LogoutOutlined,
+  TeamOutlined,
 } from '@ant-design/icons'
 import { useRouter, usePathname } from 'next/navigation'
 import { signOut } from '@/lib/api/auth'
@@ -30,6 +31,7 @@ export default function DashboardSider() {
   // Determine selected key based on current pathname
   const getSelectedKey = () => {
     if (pathname === '/') return 'apps'
+    if (pathname.startsWith('/team')) return 'team'
     if (pathname.startsWith('/profile')) return 'profile'
     if (pathname.startsWith('/settings')) return 'settings'
     if (pathname.startsWith('/billing')) return 'billing'
@@ -43,6 +45,12 @@ export default function DashboardSider() {
       icon: <AppstoreOutlined />,
       label: 'My Apps',
       onClick: () => router.push('/'),
+    },
+    {
+      key: 'team',
+      icon: <TeamOutlined />,
+      label: 'Team',
+      onClick: () => router.push('/team'),
     },
     {
       key: 'profile',

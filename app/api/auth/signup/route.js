@@ -1,18 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
-// Admin client for creating users
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_KEY
-)
-
-// Regular client for user operations
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-)
-
 /**
  * POST /api/auth/signup
  * 
@@ -23,13 +11,14 @@ const supabase = createClient(
  *   email: string,
  *   password: string,
  *   fullName?: string,
+ *   organizationName?: string,  // NEW: Organization name
  *   appId?: string  // Which app is user signing up from
  * }
  */
 export async function POST(request) {
   try {
     const body = await request.json()
-    const { email, password, fullName, appId = 'smartgrid-dashboard' } = body
+    const { email, password, fullName, organizationName, appId = 'smartgrid-dashboard' } = body
 
     // Validate
     if (!email || !password) {
@@ -45,6 +34,17 @@ export async function POST(request) {
         { status: 400 }
       )
     }
+
+    // Initialize Supabase clients
+    const supabaseAdmin = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_KEY
+    )
+
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    )
 
     console.log(`📝 Signup attempt: ${email} from ${appId}`)
 
@@ -73,40 +73,87 @@ export async function POST(request) {
 
     console.log(`✅ User created: ${user.id}`)
 
-    // 2. Create billing record (Base plan with 100 credits)
-    const { error: billingError } = await supabaseAdmin
-      .from('billing')
+    // Parse full name
+    const [firstName, ...lastNameParts] = (fullName || email.split('@')[0]).split(' ')
+    const lastName = lastNameParts.join(' ')
+
+    // 2. Create user profile
+    const { error: profileError } = await supabaseAdmin
+      .from('user_profiles')
       .insert({
         user_id: user.id,
-        plan: 'free',
-        status: 'active',
-        total_credits: 100,
-        used_credits: 0,
-        credit_reset_date: new Date(new Date().setMonth(new Date().getMonth() + 1))
+        first_name: firstName,
+        last_name: lastName,
+        platform_role: 'user'
       })
 
-    if (billingError) {
-      console.error('⚠️ Billing creation error:', billingError)
-      // Don't fail signup if billing fails - can be created later
+    if (profileError) {
+      console.error('⚠️ Profile creation error:', profileError)
     }
 
-    // 3. Grant access to all 4 grids (Base plan)
+    // 3. Create organization
+    const orgName = organizationName || `${fullName || email.split('@')[0]}'s Organization`
+    const { data: organization, error: orgError } = await supabaseAdmin
+      .from('organizations')
+      .insert({
+        name: orgName,
+        owner_id: user.id,
+        status: 'active'
+      })
+      .select()
+      .single()
+
+    if (orgError) {
+      console.error('❌ Organization creation error:', orgError)
+      return NextResponse.json(
+        { error: 'Failed to create organization', details: orgError.message },
+        { status: 500 }
+      )
+    }
+
+    console.log(`✅ Organization created: ${organization.name}`)
+
+    // 4. Organization billing is auto-created by trigger, but let's verify
+    // (The trigger creates it with default 14-day trial)
+
+    // 5. Add user as organization owner
+    const { error: memberError } = await supabaseAdmin
+      .from('organization_members')
+      .insert({
+        user_id: user.id,
+        organization_id: organization.id,
+        role: 'owner',
+        is_active: true
+      })
+
+    if (memberError) {
+      console.error('❌ Member creation error:', memberError)
+    } else {
+      console.log(`✅ User added as organization owner`)
+    }
+
+    // 6. Grant default app access (TeamGrid free)
     const { error: accessError } = await supabaseAdmin
-      .from('app_access')
+      .from('organization_apps')
       .insert([
-        { user_id: user.id, app_id: 'brandgrid', has_access: true },
-        { user_id: user.id, app_id: 'callgrid', has_access: true },
-        { user_id: user.id, app_id: 'salesgrid', has_access: true },
-        { user_id: user.id, app_id: 'teamgrid', has_access: true },
+        { 
+          organization_id: organization.id, 
+          app_name: 'teamgrid', 
+          has_access: true,
+          plan: 'free',
+          status: 'active'
+        }
       ])
 
     if (accessError) {
       console.error('⚠️ App access error:', accessError)
+    } else {
+      console.log(`✅ TeamGrid access granted`)
     }
 
     console.log(`✅ User setup complete for ${email}`)
 
-    // 4. Return user data and session
+    // 7. Return user data and session
     return NextResponse.json({
       success: true,
       user: {
@@ -114,12 +161,17 @@ export async function POST(request) {
         email: user.email,
         full_name: user.user_metadata?.full_name,
       },
+      organization: {
+        id: organization.id,
+        name: organization.name,
+        role: 'owner'
+      },
       session: {
         access_token: session?.access_token,
         refresh_token: session?.refresh_token,
         expires_at: session?.expires_at,
       },
-      message: 'Account created successfully! You can now access all SmartGrid apps.'
+      message: `Account created successfully! Welcome to ${organization.name}. You have a 14-day free trial.`
     })
 
   } catch (error) {

@@ -71,11 +71,11 @@ export default function CreditsCard({ billing, loading = false }) {
               Credit Usage This Month
             </Text>
             <Text type="secondary">
-              You've used {usedCredits.toLocaleString()} out of {totalCredits.toLocaleString()} credits
+              You&apos;ve used {usedCredits.toLocaleString()} out of {totalCredits.toLocaleString()} credits
             </Text>
             {usagePercent >= 80 && (
               <Text type="warning" style={{ marginTop: 8 }}>
-                ⚠️ You're running low on credits. Consider upgrading your plan.
+                ⚠️ You&apos;re running low on credits. Consider upgrading your plan.
               </Text>
             )}
           </Space>

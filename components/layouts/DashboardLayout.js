@@ -9,6 +9,7 @@ import LoadingState from '@/components/shared/LoadingState'
 import ErrorState from '@/components/shared/ErrorState'
 import { useUser } from '@/lib/hooks/queries/useUser'
 import { useBilling } from '@/lib/hooks/queries/useBilling'
+import { useAuth } from '@/components/providers/AuthProvider'
 
 const { Header, Sider, Content } = Layout
 const { Title } = Typography
@@ -21,17 +22,66 @@ const { Title } = Typography
 export default function DashboardLayout({ children }) {
   const [collapsed, setCollapsed] = useState(false)
   
+  // Get auth state from AuthProvider
+  const { user: authUser, loading: authLoading } = useAuth()
+  
   // Fetch user and billing data
   const { data: user, isLoading: userLoading, error: userError } = useUser()
   const { data: billing, isLoading: billingLoading } = useBilling(user?.id)
+  
+  // Get primary organization from user data
+  const organization = user?.organizations?.[0]
 
-  // Show loading state while fetching user data
-  if (userLoading) {
+  // Log state for debugging
+  console.log('DashboardLayout state:', { 
+    authLoading,
+    authUser: authUser?.email,
+    userLoading, 
+    hasUser: !!user, 
+    hasError: !!userError,
+    errorMessage: userError?.message 
+  })
+
+  // Show loading state while auth is loading or fetching user data
+  if (authLoading || userLoading) {
     return <LoadingState tip="Loading dashboard..." />
   }
 
-  // Show error state if user data fails to load
-  if (userError) {
+  // If no auth user, redirect to login
+  if (!authUser) {
+    console.log('No auth user, redirecting to login...')
+    if (typeof window !== 'undefined') {
+      window.location.href = '/login'
+    }
+    return <LoadingState tip="Redirecting to login..." />
+  }
+
+  // If 401 error (not authenticated), redirect to login
+  if (userError?.status === 401 || userError?.message?.includes('Unauthorized')) {
+    console.log('User not authenticated, redirecting to login...')
+    if (typeof window !== 'undefined') {
+      window.location.href = '/login'
+    }
+    return <LoadingState tip="Redirecting to login..." />
+  }
+
+  // If no user data (not authenticated), show loading (middleware will redirect)
+  if (!user && !userError) {
+    return <LoadingState tip="Authenticating..." />
+  }
+
+  // If user is explicitly null (auth failed gracefully), redirect to login
+  if (user === null) {
+    console.log('User is null, redirecting to login...')
+    if (typeof window !== 'undefined') {
+      window.location.href = '/login'
+    }
+    return <LoadingState tip="Redirecting to login..." />
+  }
+
+  // Show error state only for real errors (not auth failures)
+  if (userError && !userError.message?.includes('Not authenticated')) {
+    console.error('DashboardLayout user error:', userError)
     return <ErrorState error={userError} />
   }
 
@@ -62,7 +112,19 @@ export default function DashboardLayout({ children }) {
         {/* Logo/Brand */}
         <div className="sidebar-logo">
           {!collapsed ? (
-            <h2>SmartGrid</h2>
+            <>
+              <h2>SmartGrid</h2>
+              {/* {organization?.name && (
+                <p style={{ 
+                  fontSize: 12, 
+                  color: 'rgba(255, 255, 255, 0.65)', 
+                  margin: 0,
+                  marginTop: -8
+                }}>
+                  {organization.name}
+                </p>
+              )} */}
+            </>
           ) : (
             <h2>SG</h2>
           )}
@@ -91,7 +153,7 @@ export default function DashboardLayout({ children }) {
             </div>
 
             {/* Header Right Content */}
-            <DashboardHeader user={user} billing={billing} />
+            <DashboardHeader user={user} billing={billing} organization={organization} />
           </div>
         </Header>
 

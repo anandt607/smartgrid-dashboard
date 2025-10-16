@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import PageHeader from '@/components/shared/PageHeader'
 import QuickStats from '@/components/dashboard/QuickStats'
 import AppsGrid from '@/components/dashboard/AppsGrid'
+import OrganizationCard from '@/components/dashboard/OrganizationCard'
 import CreditsCard from '@/components/billing/CreditsCard'
 import LoadingState from '@/components/shared/LoadingState'
 import ErrorState from '@/components/shared/ErrorState'
@@ -12,6 +13,7 @@ import { useUser } from '@/lib/hooks/queries/useUser'
 import { useApps } from '@/lib/hooks/queries/useApps'
 import { useBilling } from '@/lib/hooks/queries/useBilling'
 import { trackAppUsage } from '@/lib/api/apps'
+import { supabase } from '@/lib/supabase/client'
 
 /**
  * Main dashboard page
@@ -22,6 +24,9 @@ export default function DashboardPage() {
   const { data: user } = useUser()
   const { data: apps, isLoading, error, refetch } = useApps(user?.id)
   const { data: billing, isLoading: billingLoading } = useBilling(user?.id)
+  
+  // Get primary organization
+  const organization = user?.organizations?.[0]
 
   // Handle app launch
   const handleLaunch = async (app) => {
@@ -29,7 +34,30 @@ export default function DashboardPage() {
       // Track app usage
       await trackAppUsage(user.id, app.id)
       
-      // Navigate to app page or external URL
+      // Special SSO handling for TeamGrid
+      if (app.name?.toLowerCase().includes('teamgrid') || app.id === 'teamgrid') {
+        message.loading('Launching TeamGrid...', 1)
+        
+        // Get current session token
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+        
+        if (sessionError || !session) {
+          message.error('Authentication error. Please login again.')
+          return
+        }
+        
+        const token = session.access_token
+        const teamGridUrl = process.env.NEXT_PUBLIC_TEAMGRID_URL || app.url || 'http://localhost:3002'
+        
+        // Open TeamGrid with token (SSO)
+        const ssoUrl = `${teamGridUrl}/sso-login?token=${token}`
+        window.open(ssoUrl, '_blank')
+        
+        message.success('TeamGrid launched! 🎉')
+        return
+      }
+      
+      // Navigate to app page or external URL (other apps)
       if (app.url) {
         window.open(app.url, '_blank')
       } else {
@@ -54,12 +82,16 @@ export default function DashboardPage() {
     revenue: 0, // This would come from Stripe data
   }
 
+  // Don't show error state for apps - just log it and continue
   if (error) {
-    return <ErrorState error={error} onRetry={refetch} />
+    console.warn('Apps loading error (non-critical):', error)
   }
 
   return (
     <Space direction="vertical" size="large" style={{ width: '100%', display: 'flex' }}>
+      {/* Organization Overview */}
+      <OrganizationCard organization={organization} loading={!user} />
+
       {/* Credits Card & Quick Stats */}
       <Row gutter={[24, 24]}>
         <Col xs={24} lg={8}>

@@ -31,6 +31,9 @@ export default function BillingPage() {
   const { data: billing, isLoading: billingLoading, refetch: refetchBilling } = useBilling(user?.id)
   const { data: invoicesData, isLoading: invoicesLoading } = useInvoices(user?.id, currentPage)
   const cancelSubscription = useCancelSubscription(user?.id)
+  
+  // Get primary organization
+  const organization = user?.organizations?.[0]
 
   // Check for success parameter from Stripe redirect
   useEffect(() => {
@@ -90,7 +93,7 @@ export default function BillingPage() {
     <Space direction="vertical" size="large" style={{ width: '100%', display: 'flex' }}>
       {/* Page Header */}
       <PageHeader
-        title="Billing"
+        title={`Billing${organization?.name ? ` - ${organization.name}` : ''}`}
         subtitle="Manage your subscription, invoices, and payment methods"
         breadcrumb={[{ title: 'Billing' }]}
         extra={

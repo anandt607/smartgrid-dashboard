@@ -54,11 +54,27 @@ export async function middleware(req) {
     data: { session },
   } = await supabase.auth.getSession()
 
+  // Refresh session if it exists but is close to expiry
+  if (session) {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (user) {
+      // Session is valid, continue
+    } else {
+      // Session expired, try to refresh
+      const { data: { session: refreshedSession } } = await supabase.auth.refreshSession()
+      if (!refreshedSession) {
+        // Refresh failed, redirect to login
+        return NextResponse.redirect(new URL('/login', req.url))
+      }
+    }
+  }
+
   // Protected routes - require authentication
   if (req.nextUrl.pathname.startsWith('/profile') ||
       req.nextUrl.pathname.startsWith('/settings') ||
       req.nextUrl.pathname.startsWith('/billing') ||
       req.nextUrl.pathname.startsWith('/apps') ||
+      req.nextUrl.pathname.startsWith('/team') ||
       req.nextUrl.pathname === '/') {
     if (!session) {
       return NextResponse.redirect(new URL('/login', req.url))
@@ -83,6 +99,7 @@ export const config = {
     '/settings/:path*',
     '/billing/:path*',
     '/apps/:path*',
+    '/team/:path*',
     '/login',
     '/signup',
   ],

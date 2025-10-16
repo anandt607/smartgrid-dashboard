@@ -1,11 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Card, Form, Input, Button, Divider, Typography, message } from 'antd'
 import { UserOutlined, LockOutlined } from '@ant-design/icons'
 import { useRouter } from 'next/navigation'
+import { useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
 import { signIn } from '@/lib/api/auth'
+import { useAuth } from '@/components/providers/AuthProvider'
 
 const { Text, Title } = Typography
 
@@ -17,6 +19,25 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [form] = Form.useForm()
   const router = useRouter()
+  const queryClient = useQueryClient()
+  const { user, loading: authLoading } = useAuth()
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (user && !authLoading) {
+      router.push('/')
+    }
+  }, [user, authLoading, router])
+
+  // Show loading while checking auth state
+  if (authLoading) {
+    return <div>Loading...</div>
+  }
+
+  // Don't render login form if user is already logged in
+  if (user) {
+    return <div>Redirecting...</div>
+  }
 
   const handleSubmit = async (values) => {
     try {
@@ -25,8 +46,17 @@ export default function LoginPage() {
         email: values.email,
         password: values.password,
       })
+      
+      // Clear all cached queries to fetch fresh data
+      queryClient.clear()
+      
       message.success('Login successful!')
       router.push('/')
+      
+      // Refresh the page after navigation to ensure fresh data
+      setTimeout(() => {
+        window.location.reload()
+      }, 100)
     } catch (error) {
       message.error(error?.message || 'Invalid email or password')
     } finally {
