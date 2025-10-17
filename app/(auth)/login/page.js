@@ -29,15 +29,8 @@ export default function LoginPage() {
     }
   }, [user, authLoading, router])
 
-  // Show loading while checking auth state
-  if (authLoading) {
-    return <div>Loading...</div>
-  }
-
-  // Don't render login form if user is already logged in
-  if (user) {
-    return <div>Redirecting...</div>
-  }
+  // Don't hide the form completely - just show loading state
+  // The form will be rendered below with loading state
 
   const handleSubmit = async (values) => {
     try {
@@ -68,7 +61,11 @@ export default function LoginPage() {
     <Card className="auth-card">
       <div style={{ textAlign: 'center', marginBottom: 24 }}>
         <Title level={3}>Welcome Back</Title>
-        <Text type="secondary">Sign in to your account to continue</Text>
+        <Text type="secondary">
+          {authLoading ? 'Checking authentication...' : 
+           user ? 'Already logged in, redirecting...' : 
+           'Sign in to your account to continue'}
+        </Text>
       </div>
 
       <Form
@@ -77,6 +74,7 @@ export default function LoginPage() {
         onFinish={handleSubmit}
         autoComplete="off"
         size="large"
+        disabled={authLoading || !!user}
       >
         <Form.Item
           name="email"
@@ -110,8 +108,14 @@ export default function LoginPage() {
         </Form.Item>
 
         <Form.Item>
-          <Button type="primary" htmlType="submit" block loading={loading}>
-            Sign In
+          <Button 
+            type="primary" 
+            htmlType="submit" 
+            block 
+            loading={loading || authLoading}
+            disabled={!!user}
+          >
+            {user ? 'Redirecting...' : loading ? 'Signing In...' : 'Sign In'}
           </Button>
         </Form.Item>
 

@@ -256,7 +256,7 @@ export async function POST(request) {
           last_name: lastName,
           full_name: `${firstName} ${lastName}`
         },
-        email_confirm: true // Auto-confirm email
+        email_confirm: true // Auto-confirm email, no verification required
       })
 
       if (createError) {

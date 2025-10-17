@@ -48,16 +48,15 @@ export async function POST(request) {
 
     console.log(`📝 Signup attempt: ${email} from ${appId}`)
 
-    // 1. Create user in Supabase Auth
-    const { data: authData, error: authError } = await supabase.auth.signUp({
+    // 1. Create user in Supabase Auth using admin client for better control
+    const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email,
       password,
-      options: {
-        data: {
-          full_name: fullName || email.split('@')[0],
-          signup_app: appId, // Track which app they signed up from
-        }
-      }
+      user_metadata: {
+        full_name: fullName || email.split('@')[0],
+        signup_app: appId, // Track which app they signed up from
+      },
+      email_confirm: true // Auto-confirm email, no verification required
     })
 
     if (authError) {
