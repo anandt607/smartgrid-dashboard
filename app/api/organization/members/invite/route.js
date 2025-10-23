@@ -182,7 +182,7 @@ export async function POST(request) {
       firstName, 
       lastName, 
       email, 
-      password = crypto.randomBytes(12).toString('hex'), // Generate password if not provided
+      password = crypto.randomBytes(8).toString('base64').replace(/[+/=]/g, '').substring(0, 12), // Generate user-friendly password
       organizationId,
       role = 'member',
       apps = defaultApps // Use determined app access
@@ -344,6 +344,28 @@ export async function POST(request) {
       console.error(`⚠️ Error granting member app access:`, grantAccessError)
     } else {
       console.log(`✅ Granted member access to specific apps: ${apps.join(', ')}`)
+    }
+
+    // Send welcome email with credentials (for new users only)
+    if (!existingUser && password) {
+      try {
+        const { error: emailError } = await createSupabaseAdmin().auth.admin.generateLink({
+          type: 'signup',
+          email: email,
+          password: password,
+          options: {
+            emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/login`
+          }
+        })
+        
+        if (emailError) {
+          console.log('⚠️ Email sending failed (non-critical):', emailError.message)
+        } else {
+          console.log(`📧 Welcome email sent to ${email}`)
+        }
+      } catch (emailError) {
+        console.log('⚠️ Email sending failed (non-critical):', emailError.message)
+      }
     }
 
     const response = NextResponse.json({

@@ -32,15 +32,6 @@ export default function DashboardLayout({ children }) {
   // Get primary organization from user data
   const organization = user?.organizations?.[0]
 
-  // Log state for debugging
-  console.log('DashboardLayout state:', { 
-    authLoading,
-    authUser: authUser?.email,
-    userLoading, 
-    hasUser: !!user, 
-    hasError: !!userError,
-    errorMessage: userError?.message 
-  })
 
   // Show loading state while auth is loading or fetching user data
   if (authLoading || userLoading) {
@@ -49,7 +40,6 @@ export default function DashboardLayout({ children }) {
 
   // If no auth user, redirect to login
   if (!authUser) {
-    console.log('No auth user, redirecting to login...')
     if (typeof window !== 'undefined') {
       window.location.href = '/login'
     }
@@ -58,7 +48,6 @@ export default function DashboardLayout({ children }) {
 
   // If 401 error (not authenticated), redirect to login
   if (userError?.status === 401 || userError?.message?.includes('Unauthorized')) {
-    console.log('User not authenticated, redirecting to login...')
     if (typeof window !== 'undefined') {
       window.location.href = '/login'
     }
@@ -72,7 +61,6 @@ export default function DashboardLayout({ children }) {
 
   // If user is explicitly null (auth failed gracefully), redirect to login
   if (user === null) {
-    console.log('User is null, redirecting to login...')
     if (typeof window !== 'undefined') {
       window.location.href = '/login'
     }

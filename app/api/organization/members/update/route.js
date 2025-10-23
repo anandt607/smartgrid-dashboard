@@ -132,6 +132,7 @@ export async function PUT(request) {
       firstName, 
       lastName, 
       email,         // ⚠️ Changing email needs special handling
+      password,      // ✅ NEW: Password update field
     } = body
 
     // Validate required fields
@@ -221,6 +222,29 @@ export async function PUT(request) {
         // Don't fail, just log
       } else {
         console.log('✅ User metadata updated')
+      }
+    }
+
+    // 4. Update password if provided
+    if (password) {
+      console.log(`🔐 Updating password for user ${userId}`)
+      
+      const { error: passwordError } = await createSupabaseAdmin().auth.admin.updateUserById(
+        userId,
+        { 
+          password: password
+        }
+      )
+
+      if (passwordError) {
+        console.error('❌ Password update error:', passwordError)
+        const response = NextResponse.json(
+          { error: 'Failed to update password', details: passwordError.message },
+          { status: 500 }
+        )
+        return addCorsHeaders(response, origin)
+      } else {
+        console.log('✅ Password updated successfully')
       }
     }
 

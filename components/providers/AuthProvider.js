@@ -37,20 +37,24 @@ export default function AuthProvider({ children }) {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('Auth state changed:', event, session?.user?.email)
+        console.log('Auth state change:', event, session?.user?.email)
         
         setUser(session?.user ?? null)
-        setLoading(false)
+        
+        // Only set loading to false after initial load or auth events
+        if (event !== 'INITIAL_SESSION') {
+          setLoading(false)
+        }
 
         // Handle auth events
         if (event === 'SIGNED_IN') {
-          console.log('User signed in:', session?.user?.email)
-          router.push('/')
+          setLoading(false)
+          // Don't redirect here - let individual pages handle their own redirects
         } else if (event === 'SIGNED_OUT') {
-          console.log('User signed out')
           router.push('/login')
         } else if (event === 'TOKEN_REFRESHED') {
-          console.log('Token refreshed for:', session?.user?.email)
+          // ✅ DON'T redirect on token refresh - preserve current route
+          // Just update the user state, no navigation needed
         }
       }
     )

@@ -1,6 +1,47 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
+// Helper to add CORS headers to response
+function addCorsHeaders(response, origin) {
+  const allowedOrigins = [
+    'http://localhost:3000', // SmartGrid Dashboard
+    'http://localhost:3001', // TeamGrid Backend
+    'http://localhost:3002', // TeamGrid Frontend
+    'http://localhost:3003', // CallGrid
+    'http://localhost:3004', // SalesGrid
+    // Add production URLs if needed
+    'https://smartgrid-dashboard.vercel.app',
+    'https://teamgrid-frontend.vercel.app',
+    'https://brandgrid-frontend.vercel.app',
+    'https://callgrid-frontend.vercel.app',
+    'https://salesgrid-frontend.vercel.app'
+  ]
+
+  if (allowedOrigins.includes(origin)) {
+    response.headers.set('Access-Control-Allow-Origin', origin)
+    response.headers.set('Access-Control-Allow-Credentials', 'true')
+    response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+    response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-App-Source')
+  } else {
+    // For development, allow any localhost origin
+    if (origin && origin.startsWith('http://localhost:')) {
+      response.headers.set('Access-Control-Allow-Origin', origin)
+      response.headers.set('Access-Control-Allow-Credentials', 'true')
+      response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+      response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-App-Source')
+    }
+  }
+  
+  return response
+}
+
+// Handle OPTIONS preflight request for CORS
+export async function OPTIONS(request) {
+  const response = new NextResponse(null, { status: 200 })
+  const origin = request.headers.get('origin')
+  return addCorsHeaders(response, origin)
+}
+
 /**
  * POST /api/auth/signup
  * 
@@ -17,22 +58,25 @@ import { createClient } from '@supabase/supabase-js'
  */
 export async function POST(request) {
   try {
+    const origin = request.headers.get('origin')
     const body = await request.json()
     const { email, password, fullName, organizationName, appId = 'smartgrid-dashboard' } = body
 
     // Validate
     if (!email || !password) {
-      return NextResponse.json(
+      const response = NextResponse.json(
         { error: 'Email and password are required' },
         { status: 400 }
       )
+      return addCorsHeaders(response, origin)
     }
 
     if (password.length < 8) {
-      return NextResponse.json(
+      const response = NextResponse.json(
         { error: 'Password must be at least 8 characters' },
         { status: 400 }
       )
+      return addCorsHeaders(response, origin)
     }
 
     // Initialize Supabase clients
@@ -61,10 +105,11 @@ export async function POST(request) {
 
     if (authError) {
       console.error('❌ Signup error:', authError)
-      return NextResponse.json(
+      const response = NextResponse.json(
         { error: authError.message },
         { status: 400 }
       )
+      return addCorsHeaders(response, origin)
     }
 
     const user = authData.user
@@ -104,10 +149,11 @@ export async function POST(request) {
 
     if (orgError) {
       console.error('❌ Organization creation error:', orgError)
-      return NextResponse.json(
+      const response = NextResponse.json(
         { error: 'Failed to create organization', details: orgError.message },
         { status: 500 }
       )
+      return addCorsHeaders(response, origin)
     }
 
     console.log(`✅ Organization created: ${organization.name}`)
@@ -150,10 +196,27 @@ export async function POST(request) {
       console.log(`✅ TeamGrid access granted`)
     }
 
+    // 7. Grant individual member app access
+    const { error: memberAccessError } = await supabaseAdmin
+      .from('member_app_access')
+      .insert({
+        user_id: user.id,
+        organization_id: organization.id,
+        app_name: 'teamgrid',
+        has_access: true,
+        granted_at: new Date().toISOString()
+      })
+
+    if (memberAccessError) {
+      console.error('⚠️ Member app access error:', memberAccessError)
+    } else {
+      console.log(`✅ Member TeamGrid access granted`)
+    }
+
     console.log(`✅ User setup complete for ${email}`)
 
-    // 7. Return user data and session
-    return NextResponse.json({
+    // 8. Return user data and session
+    const response = NextResponse.json({
       success: true,
       user: {
         id: user.id,
@@ -172,13 +235,15 @@ export async function POST(request) {
       },
       message: `Account created successfully! Welcome to ${organization.name}. You have a 14-day free trial.`
     })
+    return addCorsHeaders(response, origin)
 
   } catch (error) {
     console.error('❌ Signup error:', error)
-    return NextResponse.json(
+    const response = NextResponse.json(
       { error: 'Internal server error', details: error.message },
       { status: 500 }
     )
+    return addCorsHeaders(response, origin)
   }
 }
 

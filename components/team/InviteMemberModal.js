@@ -84,7 +84,29 @@ export default function InviteMemberModal({
       }
 
       message.destroy()
-      message.success(`${values.firstName} has been added successfully!`)
+      
+      // Show password to admin if it was generated
+      if (supabaseData.password) {
+        message.success({
+          content: (
+            <div>
+              <div>{values.firstName} has been added successfully!</div>
+              <div style={{ marginTop: 8, padding: 8, background: '#f0f0f0', borderRadius: 4, fontFamily: 'monospace' }}>
+                <strong>Login Credentials:</strong><br/>
+                Email: {values.email}<br/>
+                Password: {supabaseData.password}
+              </div>
+              <div style={{ marginTop: 4, fontSize: 12, color: '#666' }}>
+                Please share these credentials with the user.
+              </div>
+            </div>
+          ),
+          duration: 10
+        })
+      } else {
+        message.success(`${values.firstName} has been added successfully!`)
+      }
+      
       form.resetFields()
       onSuccess?.()
       onCancel()

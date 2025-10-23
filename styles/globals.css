@@ -127,6 +127,31 @@ body {
   background-color: #f5f5f5;
 }
 
+/* Auth pages - no scroll */
+.auth-page {
+  height: 100vh !important;
+  overflow: hidden !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+}
+
+.auth-page * {
+  box-sizing: border-box;
+}
+
+/* Prevent body scroll on auth pages */
+body.auth-page-active {
+  overflow: hidden !important;
+  height: 100vh !important;
+  position: fixed !important;
+  width: 100% !important;
+}
+
 a {
   color: inherit;
   text-decoration: none;
