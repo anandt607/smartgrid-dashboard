@@ -42,6 +42,186 @@ export async function OPTIONS(request) {
   return addCorsHeaders(response, origin)
 }
 
+// Handle OAuth callback
+export async function GET(request) {
+  try {
+    const origin = request.headers.get('origin')
+    const { searchParams } = new URL(request.url)
+    const code = searchParams.get('code')
+    const provider = searchParams.get('provider')
+    
+    if (provider === 'google' && code) {
+      const supabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+      )
+      
+      const supabaseAdmin = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL,
+        process.env.SUPABASE_SERVICE_KEY
+      )
+      
+      // Exchange code for session
+      const { data, error } = await supabase.auth.exchangeCodeForSession(code)
+      
+      if (error) {
+        console.error('Google OAuth error:', error)
+        return NextResponse.json({ error: error.message }, { status: 400 })
+      }
+      
+      const user = data.user
+      const session = data.session
+      
+      console.log(`✅ Google user logged in: ${user.id}`)
+      
+      // Check if user has organization
+      const { data: userOrg, error: orgError } = await supabaseAdmin
+        .from('organization_members')
+        .select('organization_id, role')
+        .eq('user_id', user.id)
+        .single()
+      
+      if (orgError || !userOrg) {
+        // Create organization for new Google user
+        return await createOrganizationForGoogleUser(user, session, origin)
+      }
+      
+      // Check organization app access
+      const { data: orgApp, error: orgAppError } = await supabaseAdmin
+        .from('organization_apps')
+        .select('has_access')
+        .eq('organization_id', userOrg.organization_id)
+        .eq('app_name', 'smartgrid-dashboard')
+        .single()
+      
+      if (orgAppError || !orgApp || !orgApp.has_access) {
+        const response = NextResponse.json(
+          { error: 'Organization does not have access to SmartGrid Dashboard' },
+          { status: 403 }
+        )
+        return addCorsHeaders(response, origin)
+      }
+      
+      // Return success response
+      const response = NextResponse.json({
+        success: true,
+        user: {
+          id: user.id,
+          email: user.email,
+          full_name: user.user_metadata?.full_name,
+          created_at: user.created_at,
+        },
+        session: {
+          access_token: session.access_token,
+          refresh_token: session.refresh_token,
+          expires_at: session.expires_at,
+          expires_in: session.expires_in,
+        },
+        organization: {
+          id: userOrg.organization_id,
+          role: userOrg.role
+        },
+        message: 'Google login successful!'
+      })
+      return addCorsHeaders(response, origin)
+    }
+    
+    return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
+    
+  } catch (error) {
+    console.error('OAuth callback error:', error)
+    const response = NextResponse.json(
+      { error: 'OAuth callback error', details: error.message },
+      { status: 500 }
+    )
+    return addCorsHeaders(response, request.headers.get('origin'))
+  }
+}
+
+// Helper function for new Google users
+async function createOrganizationForGoogleUser(user, session, origin) {
+  const supabaseAdmin = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_KEY
+  )
+  
+  // Create organization
+  const orgName = `${user.user_metadata?.full_name || user.email.split('@')[0]}'s Organization`
+  const { data: organization, error: orgError } = await supabaseAdmin
+    .from('organizations')
+    .insert({
+      name: orgName,
+      owner_id: user.id,
+      status: 'active'
+    })
+    .select()
+    .single()
+  
+  if (orgError) {
+    console.error('Organization creation error:', orgError)
+    const response = NextResponse.json(
+      { error: 'Failed to create organization', details: orgError.message },
+      { status: 500 }
+    )
+    return addCorsHeaders(response, origin)
+  }
+  
+  // Add user as organization owner
+  await supabaseAdmin
+    .from('organization_members')
+    .insert({
+      user_id: user.id,
+      organization_id: organization.id,
+      role: 'owner',
+      is_active: true
+    })
+  
+  // Grant SmartGrid Dashboard access
+  await supabaseAdmin
+    .from('organization_apps')
+    .insert({
+      organization_id: organization.id,
+      app_name: 'smartgrid-dashboard',
+      has_access: true,
+      plan: 'free',
+      status: 'active'
+    })
+  
+  // Grant TeamGrid access
+  await supabaseAdmin
+    .from('organization_apps')
+    .insert({
+      organization_id: organization.id,
+      app_name: 'teamgrid',
+      has_access: true,
+      plan: 'free',
+      status: 'active'
+    })
+  
+  const response = NextResponse.json({
+    success: true,
+    user: {
+      id: user.id,
+      email: user.email,
+      full_name: user.user_metadata?.full_name,
+      created_at: user.created_at,
+    },
+    session: {
+      access_token: session.access_token,
+      refresh_token: session.refresh_token,
+      expires_at: session.expires_at,
+      expires_in: session.expires_in,
+    },
+    organization: {
+      id: organization.id,
+      name: organization.name,
+      role: 'owner'
+    },
+    message: `Welcome to ${organization.name}! Your account has been created successfully.`
+  })
+  return addCorsHeaders(response, origin)
+}
+
 /**
  * POST /api/auth/signin
  * 

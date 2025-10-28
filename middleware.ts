@@ -69,6 +69,20 @@ export async function middleware(req) {
     }
   }
 
+  // Check if this is an OAuth callback (has code parameter)
+  const isOAuthCallback = req.nextUrl.searchParams.has('code')
+  
+  console.log('Middleware check:', {
+    pathname: req.nextUrl.pathname,
+    hasCode: req.nextUrl.searchParams.has('code'),
+    hasProvider: req.nextUrl.searchParams.has('provider'),
+    isOAuthCallback,
+    hasSession: !!session,
+    code: req.nextUrl.searchParams.get('code')?.substring(0, 10) + '...',
+    provider: req.nextUrl.searchParams.get('provider'),
+    allParams: Object.fromEntries(req.nextUrl.searchParams.entries())
+  })
+  
   // Protected routes - require authentication
   if (req.nextUrl.pathname.startsWith('/profile') ||
       req.nextUrl.pathname.startsWith('/settings') ||
@@ -76,7 +90,8 @@ export async function middleware(req) {
       req.nextUrl.pathname.startsWith('/apps') ||
       req.nextUrl.pathname.startsWith('/team') ||
       req.nextUrl.pathname === '/') {
-    if (!session) {
+    if (!session && !isOAuthCallback) {
+      console.log('Redirecting to login - no session and not OAuth callback')
       return NextResponse.redirect(new URL('/login', req.url))
     }
   }
@@ -87,6 +102,11 @@ export async function middleware(req) {
     if (session) {
       return NextResponse.redirect(new URL('/', req.url))
     }
+  }
+
+  // OAuth callback route - allow without authentication
+  if (req.nextUrl.pathname.startsWith('/auth/callback')) {
+    return res
   }
 
   return res
@@ -102,5 +122,6 @@ export const config = {
     '/team/:path*',
     '/login',
     '/signup',
+    '/auth/callback',
   ],
 }

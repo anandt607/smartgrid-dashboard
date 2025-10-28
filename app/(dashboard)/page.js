@@ -1,7 +1,8 @@
 'use client'
 
 import { Space, message, Row, Col } from 'antd'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { useEffect } from 'react'
 import PageHeader from '@/components/shared/PageHeader'
 import QuickStats from '@/components/dashboard/QuickStats'
 import AppsGrid from '@/components/dashboard/AppsGrid'
@@ -21,12 +22,84 @@ import { supabase } from '@/lib/supabase/client'
  */
 export default function DashboardPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { data: user } = useUser()
   const { data: apps, isLoading, error, refetch } = useApps(user?.id)
   const { data: billing, isLoading: billingLoading } = useBilling(user?.id)
   
   // Get primary organization
   const organization = user?.organizations?.[0]
+
+  // Handle OAuth callback
+  useEffect(() => {
+    const handleOAuthCallback = async () => {
+      const code = searchParams.get('code')
+      const provider = searchParams.get('provider')
+      
+      console.log('Dashboard OAuth check:', { 
+        code: code ? code.substring(0, 10) + '...' : 'null',
+        provider: provider || 'null',
+        allParams: Object.fromEntries(searchParams.entries())
+      })
+      
+      if (code) {
+        console.log('OAuth callback detected on dashboard:', { 
+          code: code.substring(0, 10) + '...', 
+          provider: provider || 'unknown' 
+        })
+        
+        try {
+          // For Google OAuth, we need to use the proper callback URL
+          // The session should be automatically set by Supabase
+          const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+          
+          if (sessionError) {
+            console.error('Session error:', sessionError)
+            message.error('Google login failed: ' + sessionError.message)
+            return
+          }
+
+          if (session && session.user) {
+            console.log('✅ OAuth login successful (session found):', session.user.email)
+            
+            // Clear URL parameters
+            window.history.replaceState({}, document.title, window.location.pathname)
+            
+            // Force page reload to update auth state
+            window.location.reload()
+          } else {
+            // Try to exchange code for session as fallback
+            console.log('No session found, trying code exchange...')
+            const { data, error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
+            
+            if (exchangeError) {
+              console.error('OAuth exchange error:', exchangeError)
+              message.error('Google login failed: ' + exchangeError.message)
+              return
+            }
+
+            if (data.user && data.session) {
+              console.log('✅ OAuth login successful (code exchange):', data.user.email)
+              
+              // Clear URL parameters
+              window.history.replaceState({}, document.title, window.location.pathname)
+              
+              // Force page reload to update auth state
+              window.location.reload()
+            } else {
+              console.error('No user data received from OAuth exchange')
+              message.error('Google login failed - no user data')
+            }
+          }
+        } catch (error) {
+          console.error('OAuth callback error:', error)
+          message.error('Google login failed: ' + error.message)
+        }
+      }
+    }
+
+    handleOAuthCallback()
+  }, [searchParams])
 
   // Handle app launch
   const handleLaunch = async (app) => {
