@@ -18,6 +18,7 @@ const { Text, Title } = Typography
  */
 export default function LoginPage() {
   const [loading, setLoading] = useState(false)
+  const [googleLoading, setGoogleLoading] = useState(false)
   const [form] = Form.useForm()
   const router = useRouter()
   const queryClient = useQueryClient()
@@ -53,13 +54,11 @@ export default function LoginPage() {
       // Clear all cached queries to fetch fresh data
       queryClient.clear()
       
-      message.success('Login successful!')
-      router.replace('/') // Use replace instead of push
+      // Don't show success message or redirect here
+      // Let the AuthProvider handle the redirect after user state updates
       
-      // Refresh the page after navigation to ensure fresh data
-      setTimeout(() => {
-        window.location.reload()
-      }, 100)
+      // Reset loading state after successful login
+      setLoading(false)
     } catch (error) {
       // Show specific error message for member access
       if (error?.message?.includes('Only organization owners and admins can access SmartGrid Dashboard')) {
@@ -84,19 +83,18 @@ export default function LoginPage() {
       } else {
         message.error(error?.message || 'Invalid email or password')
       }
-    } finally {
       setLoading(false)
     }
   }
 
   const handleGoogleLogin = async () => {
     try {
-      setLoading(true)
+      setGoogleLoading(true)
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
-             options: {
-               redirectTo: `${window.location.origin}/auth/callback`
-             }
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`
+        }
       })
       
       if (error) {
@@ -110,7 +108,7 @@ export default function LoginPage() {
       console.error('Google login error:', error)
       message.error('Google login failed')
     } finally {
-      setLoading(false)
+      setGoogleLoading(false)
     }
   }
 
@@ -240,7 +238,7 @@ export default function LoginPage() {
           onClick={handleGoogleLogin}
           size="large"
           block
-          loading={loading}
+          loading={googleLoading}
           disabled={!!user}
           style={{
             height: '44px',
@@ -278,7 +276,7 @@ export default function LoginPage() {
               <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
               <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
             </svg>
-            {user ? 'Redirecting...' : loading ? 'Signing In...' : 'Continue with Google'}
+            {googleLoading ? 'Redirecting...' : 'Continue with Google'}
           </div>
         </Button>
             </Form.Item>
